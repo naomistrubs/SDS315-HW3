@@ -1,0 +1,151 @@
+---
+title: "Naomi Struble, nas4252"
+output: html_document
+date: "2024-01-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+milk <- read.csv('milk.csv')
+market <- read.csv('marketmodel.csv')
+creatine <- read.csv('creatinine.csv')
+covid <- read.csv('covid.csv')
+library(tidyverse)
+library(mosaic)
+library(kableExtra)
+```
+Github link:
+
+---
+
+### **Problem 1**
+
+```{r, echo=FALSE, results=FALSE}
+model_creatine = lm(creatclear ~ age, data=creatine)
+coef(model_creatine)
+```
+
+For a 55 year old, it can be expected that they should have a `r round(147 - 55 * .62, digits = 2)` creatinine clearance rate. By determining the y-intercept and slope of the fitted model, the prior statement can be derived. Specifically by using the formula: creatinine clearance rate = intercept - (slope x age).
+
+The creatinine clearance rate changes at a negative rate of .62 mL/minute per year. This number comes directly from the slope of the fitted model. 
+
+Based on the intercept and slope received from the fitted model, comparisons are able to be made regarding the creatine clearance rates for different ages. For example, the avearage 40-year-old should have a creatine clearance rate of at least `r round(147 - 40 * .62, digits = 2)`, while the average 60-year-old should have a rate of `r round(147 - 60 * .62, digits = 2)`. Based on these statistics, it is obvious that a 40-year-old with a rate of 135 is healther than a 60-year-old with a rate of 112. This is because the 40 year old has a rate that is roughly 11 digits higher, comparatively. 
+
+---
+
+### **Problem 2**
+
+The beta of a stock measures the systematic risk that a stock portfolio has on the market as a whole. In other words, it is the percentage change of a stocks return, for every percentage change in the stock market. The average firm will have a systematic risk of 1.0; therefore, any firm with a beta that is higher than 1.0 has higher systematic risk and any firm with a beta lower than 1.0 has lower systematic risk. This risk details by how much the firms return will increase/decrease as the stock market increases/decreases. The beta can be calculated by dividing the entire stock market's return by the return of a specific firm. When comparing beta to the Capital Asset Pricing Model (CAPM), there are similarities to be notes. For instance the result of CAPM is the rate of return, which is also what beta denotes. Additionally, CAPM looks at the entire stock market when determining the rate of return in a likewise manner as beta.  
+
+```{r,echo=FALSE, results=FALSE}
+#REGRESSION MODELS
+model_aapl = lm(AAPL ~ SPY, data=market)
+coef(model_aapl)
+
+model_goog = lm(GOOG ~ SPY, data=market)
+coef(model_goog)
+
+model_mrk = lm(MRK ~ SPY, data=market)
+coef(model_mrk)
+
+model_jnj = lm(JNJ ~ SPY, data=market)
+coef(model_jnj)
+
+model_wmt = lm(WMT ~ SPY, data=market)
+coef(model_wmt)
+
+model_tgt = lm(TGT ~ SPY, data=market)
+coef(model_tgt)
+
+
+inter <- rep(NA, 6)
+slope <- rep(NA, 6)
+r.sq  <- rep(NA, 6)
+
+inter[1] <- coef(model_aapl)[1]
+inter[2] <- coef(model_goog)[1]
+inter[3] <- coef(model_mrk)[1]
+inter[4] <- coef(model_jnj)[1]
+inter[5] <- coef(model_wmt)[1]
+inter[6] <- coef(model_tgt)[1]
+
+slope[1] <- coef(model_aapl)[2]
+slope[2] <- coef(model_aapl)[2]
+slope[3] <- coef(model_aapl)[2]
+slope[4] <- coef(model_aapl)[2]
+slope[5] <- coef(model_aapl)[2]
+slope[6] <- coef(model_aapl)[2]
+
+r.sq[1] <- rsquared(model_aapl)
+r.sq[2] <- rsquared(model_goog)
+r.sq[3] <- rsquared(model_mrk)
+r.sq[4] <- rsquared(model_jnj)
+r.sq[5] <- rsquared(model_wmt)
+r.sq[6] <- rsquared(model_tgt)
+
+inter <- inter %>% format(scientific = FALSE)
+
+names <- colnames(market)[3:ncol(market)]
+
+stock_table <- tibble(`Ticker Symbol` = names, Intercept = inter, Slope = slope, `R-Squared` = r.sq)
+print(stock_table)
+```
+
+```{r, echo=FALSE}
+#CREATE A TABLE
+kable_styling(
+  kable(
+    stock_table,
+    format = "html",
+    align = "c",
+    digits = 3,
+    escape = FALSE,
+    booktabs = TRUE,
+    linesep = ""
+  ),
+  position = "center",
+  latex_options = "hold_position"
+)
+```
+
+
+The table depicts 6 individual stocks in the S & P stock market and their regressions. Within these regressions, their intercept, slope and r-squared are calculated and displayed.
+
+Based on the table above and the regression calculations, it is clear that Apple has the lowest systematic risk, while Google has the highest. 
+
+
+---
+
+### **Problem 3**
+
+```{r, echo=FALSE, results=FALSE}
+covid_spain <- covid[covid$country == "Spain",]
+covid_italy <- covid[covid$country == "Italy",]
+
+#SPAIN
+lm_spain = lm(log(deaths) ~ days_since_first_death, data=covid_spain)
+coef(lm_spain)
+
+#ITALY
+lm_italy = lm(log(deaths) ~ days_since_first_death, data=covid_italy)
+coef(lm_italy)
+
+#Line Graph
+ggplot(covid) +
+  geom_line(aes(x=days_since_first_death, y=deaths, col=country)) + labs(title = "Daily Deaths Over Time for Italy vs. Spain", x = "Days Since First Death", y = "Number of Deaths") + theme_classic()
+```
+
+The estimated growth rate for Italy is .183 and the doubling time is `r round(70 / 18.3, digits=0)` days. 
+
+The estimated growth rate for Spain is .276 and the doubling time is `r round(70 / 27.6, digits=0)` days. 
+
+---
+
+### **Problem 4**
+
+```{r, echo=FALSE, results=FALSE}
+lm_milk = lm(log(sales) ~ log(price), data=milk)
+coef(lm_milk)
+```
+
+By taking the natural log of the price, the value of the elasticity demand for milk can be found to be 1.62 (absolute value). This number signifies that the demand for milk will decrease as the price increases.
